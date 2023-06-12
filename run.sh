@@ -16,7 +16,6 @@ start_container() {
   if [[ -z $(docker container ls -a | grep $CONTAINER_NAME) ]]; then
     docker run -it \
                --name $CONTAINER_NAME \
-               --user=$(id -u $USER):$(id -g $USER) \
                --network=host \
                --gpus=all \
                --privileged \
@@ -24,10 +23,6 @@ start_container() {
                --env="DISPLAY" \
                --volume=$(pwd):/home/ubuntu/ \
                --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-               --volume="/etc/group:/etc/group:ro" \
-               --volume="/etc/passwd:/etc/passwd:ro" \
-               --volume="/etc/shadow:/etc/shadow:ro" \
-               --volume="/etc/sudoers.d:/etc/sudoers.d:ro" \
                --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
                $IMAGE_NAME:latest 
   else 
@@ -50,6 +45,9 @@ help() {
 }
 
 attach_container() {
+   if [[ -z $(docker container ls | grep $CONTAINER_NAME) ]]; then
+      docker start $CONTAINER_NAME > /dev/null
+   fi
    docker exec -it $CONTAINER_NAME /bin/bash
 }
 
@@ -58,7 +56,7 @@ delete_container() {
 }
 
 
-while getopts ":hsa:" option; do
+while getopts ":hsadm:" option; do
    case $option in
       h) 
          help
